@@ -1,21 +1,20 @@
 //Asignacion de varibles tamaños graficos
-var chart_width     =   800;
-var chart_height    =   600;
+var chart_width     =   500;
+var chart_height    =   400;
 var centered;
 
-var splot_width = 800;
-var splot_height = 500;
-
-var pie_width =800;
-var pie_height= Math.min(pie_width, 500);
-var radius = Math.min(pie_width, pie_height)/2;
-
-var arc = d3.arc()
-  .innerRadius(radius * 0.60)
-  .outerRadius(radius - 5);
-
+var splot_width = 500;
+var splot_height = 300;
 
 var margin  = {
+        top: 20,
+        botton: 50,
+        left:120,
+        right:50
+            
+    };
+
+var margin2  = {
         top: 20,
         botton: 50,
         left:120,
@@ -29,8 +28,9 @@ var color = d3.scaleLinear()
     .clamp(true)
     .range(['white', '#409A99']);
 
+//Scalar Mapa
 var projection = d3.geoMercator()
-    .scale(12000/ 2 / Math.PI)
+    .scale(8000/ 2 / Math.PI)
     .center([-74, 4.5])
     .translate([chart_width / 2, chart_height / 2]);
 
@@ -38,7 +38,7 @@ var path = d3.geoPath()
     .projection(projection);
 
     
-// Create SVG
+// Crear SVG
 var svg = d3.select("#chart")
     .append("svg")
     .attr("width", chart_width)
@@ -54,20 +54,15 @@ var svg_sp = d3.select("#scatterplot")
 
 var svg_path = svg_sp.append("path");
 
-var svg_pie = d3.select("#pie")
-      .append("svg")
-      .attr("width", pie_width)
-      .attr("height", pie_height)
-      .attr("viewBox", [-pie_width / 2, -pie_height / 2, pie_width, pie_height])
-      .style("width",pie_width)
-      .style("height",pie_height);
+var svg_sp2 = d3.select("#scatterplot2")
+                .append("svg")
+                .attr("width", splot_width)
+                .attr("height", splot_height);
 
-var pie = d3.pie()
-      .padAngle(1 / radius)
-      .sort(null)
-      .value(d => d.COBERTURA_NETA_SECUNDARIA);
+var svg_path2 = svg_sp2.append("path");
 
-// Add background
+
+// Agregar Fondo Blanco
 svg.append('rect')
   .attr('class', 'background')
   .attr('width', chart_width)
@@ -79,7 +74,7 @@ var g = svg.append('g');
 var mapLayer = g.append('g')
   .classed('map-layer', true);
 
-//add Tooltip
+//agregar Tooltip
     var tooltip = d3.select ("body")
                     .append("div")
                     .attr("class","tooltip");
@@ -91,7 +86,7 @@ var dataset =[];
 d3.json("colombia-dep.json").then(function(data){
     var features = data.features;
 
-    // Update color scale domain based on data
+    // Genera Color
   color.domain([0, d3.max(features, nameLength)]);
 
    
@@ -110,19 +105,21 @@ d3.json("colombia-dep.json").then(function(data){
 
 var escalaX = null;
 var escalaY= null;
+var escalaX2 = null;
+var escalaY2 = null;
 var focus = null;
 var focusText= null;
 
 // Creación titulo interactivo
 function actualizaTitulo (nuevo){
-  titulo_sp.text("Variación anual - Dpto. " + nuevo)
+  titulo_sp.text("Variación anual - Dpto. " + nuevo);
   }
 
   //Creación funcion al clickear
 function click(d){
   pintarLineas(nameFn(d));
-  actualizaTitulo(d.properties.NOMBRE_DPT);
-  deptopie2(d.properties.NOMBRE_DPT)
+  actualizaTitulo(nameFn(d));
+  pintarLineas2(nameFn(d));
 }
 
 
@@ -130,37 +127,42 @@ d3.csv("MEN_ESTADISTICAS_EN_EDUCACION_EN_PREESCOLAR__B_SICA_Y_MEDIA_POR_DEPARTAM
     dataset =data;
     
 
-     // Escalas
+     // Escalas Grafico 1 COBERTURA_NETA
     escalaX = d3.scaleLinear()
                     .domain (d3.extent(dataset, d => d.AÑO))
                     .range ([0 + margin.left, splot_width - margin.right]);
     
+
+    
     
     escalaY= d3.scaleLinear()
-                   .domain ([50, d3.max(dataset, function(d) { return d.COBERTURA_NETA; })])
+                   .domain ([20, d3.max(dataset, function(d) { return d.COBERTURA_NETA; })])
                    .range ([splot_height - margin.botton, 0 + margin.top]);
+    
+    
     
     
     // Ejes
     var ejeX = d3.axisBottom (escalaX);
     
-// Agrega el eje X
-svg_sp.append("g")
-    .attr("transform", "translate(0," + (splot_height - margin.botton + 5) + ")")
-    .call(ejeX);
+    
+    // Agrega el eje X
+    svg_sp.append("g")
+        .attr("transform", "translate(0," + (splot_height - margin.botton + 5) + ")")
+        .call(ejeX);
 
-// Agrega una etiqueta al eje X
-svg_sp.append("text")
-    .attr("class", "axis-label")
-    .text("AÑO")
-    .attr("x", splot_width / 2)
-    .attr("y", splot_height - 1)
-    .style("text-anchor", "middle");
+    // Agrega una etiqueta al eje X
+    svg_sp.append("text")
+        .attr("class", "axis-label")
+        .text("AÑO")
+        .attr("x", splot_width / 2)
+        .attr("y", splot_height - 1)
+        .style("text-anchor", "middle");
 
-// Estilo para la etiqueta del eje X
-svg_sp.select(".axis-label")
-    .style("font-size", "20px")
-    .style("fill", "black");
+    // Estilo para la etiqueta del eje X
+    svg_sp.select(".axis-label")
+        .style("font-size", "20px")
+        .style("fill", "black");
 
      var ejeY = d3.axisLeft (escalaY);
     
@@ -175,12 +177,56 @@ svg_sp.select(".axis-label")
                .delay (500)  //Demora inicio animación
                .call(ejeY);
     
+    //Grafico 2 COBERTURA NETA SECUNDARIA
+    escalaX2 = d3.scaleLinear()
+                .domain (d3.extent(dataset, d => d.AÑO))
+                .range ([0 + margin.left, splot_width - margin.right]);
+    
+    escalaY2= d3.scaleLinear()
+                   .domain ([20, d3.max(dataset, function(d) { return d.COBERTURA_NETA_SECUNDARIA; })])
+                   .range ([splot_height - margin.botton, 0 + margin.top]);
+        // Ejes
+    
+    var ejeX2 = d3.axisBottom (escalaX2);
+
+    
+    // Agrega el eje X
+    svg_sp2.append("g")
+        .attr("transform", "translate(0," + (splot_height - margin.botton + 5) + ")")
+        .call(ejeX2);
+
+    // Agrega una etiqueta al eje X
+    svg_sp2.append("text")
+        .attr("class", "axis-label")
+        .text("AÑO")
+        .attr("x", splot_width / 2)
+        .attr("y", splot_height - 1)
+        .style("text-anchor", "middle");
+
+    // Estilo para la etiqueta del eje X
+    svg_sp2.select(".axis-label")
+        .style("font-size", "20px")
+        .style("fill", "black");
+
+     var ejeY2 = d3.axisLeft (escalaY2);
+    
+    svg_sp2.append("g")
+               .attr("transform","translate (" + margin.left + ",0)")
+               // Añadimos una transicion
+               .transition()
+               .duration (1000)
+               // https://d3js.org/d3-ease#easeBack
+               .ease(d3.easeBackIn)
+             //.ease (d3.easeBounce) 
+               .delay (500)  //Demora inicio animación
+               .call(ejeY2);
+    
      focus = svg_sp.append('g')
-    .append('circle')
-    .style("fill", "none")
-    .attr("stroke", "black")
-    .attr('r', 8.5)
-    .style("opacity", 0);
+            .append('circle')
+            .style("fill", "none")
+            .attr("stroke", "black")
+            .attr('r', 8.5)
+            .style("opacity", 0);
     
     focusText = svg_sp
         .append('g')    
@@ -189,47 +235,6 @@ svg_sp.select(".axis-label")
         .attr("text-anchor", "left")      
         .attr("alignment-baseline", "middle");
  
-      
-//CREACION PIE CON DATOS FILTRADOS POR AÑO Y POR DEPARTAMENTO
-      var datafiltros=dataset.filter(function(d){
-        return d.AÑO === "2022" 
-      })
-   
-      var colorP = d3.scaleOrdinal()
-            .domain(datafiltros.map(d => d.COBERTURA_NETA_SECUNDARIA))
-            .range(d3.quantize(t => d3.interpolateSpectral(t * 0.8 + 0.1), data.length).reverse());
-
-   
-    
-//Agregacion datos pie
-    svg_pie.append("g")
-      .selectAll()
-      .data(pie(datafiltros))
-      .join("path")
-      .attr("fill", d => colorP(d.DEPARTAMENTO))
-      .attr("d", arc)
-      .append("title")
-     
-      
-    svg_pie.append("g")
-      .attr("font-family", "sans-serif")
-      .attr("font-size", 12)
-      .attr("text-anchor", "middle")  
-      .selectAll()
-      .data(pie(datafiltros))
-      .join("text")
-      .attr("transform", d => `translate(${arc.centroid(d)})`)
-      .call(text => text.append("tspan")
-          .attr("y", "-0.4em")
-          .attr("font-weight", "bold")
-          .text(d => d.data.DEPARTAMENTO))
-          .call(text => text.filter(d => (d.endAngle - d.startAngle) > 0.25).append("tspan"))
-          .attr("x", 0)
-          .attr("y", "0.7em")
-          .attr("fill-opacity", 0.7)
-          .text(d => d.data.COBERTURA_NETA_SECUNDARIA)
-          .text(d => d.data.COBERTURA_NETA_SECUNDARIA.toLocaleString("Educación Secundaria"))
-
 
 });
 
@@ -311,13 +316,6 @@ function encontrarData(depto){
 }
 
 
-function deptopie2(depto){
-
-  var datafiltros = dataset.filter(function(d) {
-    return d.AÑO === "2022" && d.NOMBRE_DPT === depto;;
-  });
-  }
-
 //Ajuste de textos en mapas vs data 
 function ajustarTexto(depto){
     if (depto == "LA GUAJIRA"){ return "La Guajira";}
@@ -352,6 +350,7 @@ function ajustarTexto(depto){
     else if (depto == "VICHADA"){return "Vichada";}
     else if (depto == "HUILA"){return "Huila";}
     else if (depto == "CHOCO"){return "Chocó";}
+    else if (depto == "SANTAFE DE BOGOTA D.C"){return "Bogotá, D.C.";}
     
 }
 
@@ -362,11 +361,7 @@ function pintarLineas(depto){
     
     console.log("clicked: " + depto);
     
-    var datosDepto = encontrarData(depto);
-    
-   
-    console.log(datosDepto);
-    
+    var datosDepto = encontrarData(depto); 
     
     var line = d3.line()
     .x(function(d) { return escalaX(d.AÑO); })
@@ -381,6 +376,8 @@ function pintarLineas(depto){
       .on("mouseover",mousemove);
      
     }
+
+
 
     
 function mousemove(d) {    // recover coordinate we need 
@@ -398,8 +395,46 @@ function mousemove(d) {    // recover coordinate we need
       
 }  
 
+function mousemove2(d) {    // recover coordinate we need 
+    var x0 = escalaX2.invert(d3.mouse(this)[0]);
+    var i = bisect(d, x0, 1);
+    selectedData = d[i]; 
+     tooltip 
+       .text(selectedData.AÑO + " / " + selectedData.COBERTURA_NETA_SECUNDARIA)
+       .style ("top", d3.event.pageY + "px")
+       .style ("left", d3.event.pageX + "px")
+       // Para que la aparición no se brusca
+       //.transition()
+       .style("opacity",1); 
+
+      
+} 
+
 
 var bisect = d3.bisector(function(d) { return d.AÑO; }).left;
+
+function pintarLineas2(depto){
+    
+    console.log("clicked: " + depto);
+    
+    var datosDepto = encontrarData(depto);
+    
+   
+    console.log(datosDepto);
+    
+    
+    var line = d3.line()
+    .x(function(d) { return escalaX2(d.AÑO); })
+    .y(function(d) { return escalaY2(d.COBERTURA_NETA_SECUNDARIA); });
+
+    svg_path2
+      .datum(datosDepto)
+      .attr("fill", "none")
+      .attr("stroke", "steelblue")
+      .attr("stroke-width", 1.5)
+      .attr("d", line)
+      .on("mouseover",mousemove2);
+}
 
 
 
